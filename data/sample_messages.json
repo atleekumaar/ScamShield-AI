@@ -1,0 +1,107 @@
+[
+  {
+    "id": "malicious-001",
+    "category": "bank_phishing",
+    "expected_is_malicious": true,
+    "expected_threat_types": ["PHISHING", "IMPERSONATION", "MALICIOUS_URL", "CREDENTIAL_HARVESTING"],
+    "text": "URGENT! Your SBI account has been suspended due to an unverified KYC status. Complete KYC verification immediately at https://sbi-secure-login.xyz/verify within 24 hours to prevent permanent closure."
+  },
+  {
+    "id": "malicious-002",
+    "category": "fake_kyc",
+    "expected_is_malicious": true,
+    "expected_threat_types": ["PHISHING", "CREDENTIAL_HARVESTING", "SOCIAL_ENGINEERING"],
+    "text": "Dear Customer, your Paytm KYC documents have expired today. Your wallet will be blocked. Update your Aadhaar card and PAN details now at https://paytm-kyc-desk.site/update or call 9876543210."
+  },
+  {
+    "id": "malicious-003",
+    "category": "fake_delivery",
+    "expected_is_malicious": true,
+    "expected_threat_types": ["PHISHING", "IMPERSONATION", "MALICIOUS_URL", "FINANCIAL_FRAUD"],
+    "text": "FedEx: Your package delivery has been put on hold due to an incorrect shipping address. Please pay the $2.99 re-delivery fee and update address details at http://fedex-parcel-update.top/tracking."
+  },
+  {
+    "id": "malicious-004",
+    "category": "job_scam",
+    "expected_is_malicious": true,
+    "expected_threat_types": ["JOB_SCAM", "FINANCIAL_FRAUD", "SOCIAL_ENGINEERING"],
+    "text": "Part-time job offer! Earn $300 - $800 daily by simply reviewing hotels and rating YouTube videos from home. No experience needed. Pay $50 registration fee to start earning today. WhatsApp +1234567890."
+  },
+  {
+    "id": "malicious-005",
+    "category": "investment_scam",
+    "expected_is_malicious": true,
+    "expected_threat_types": ["FINANCIAL_FRAUD", "SOCIAL_ENGINEERING"],
+    "text": "Guaranteed 400% profit in 7 days! Join our VIP crypto trading telegram channel. Deposit just 0.05 BTC to double your portfolio overnight. 100% risk free and approved by top financial analysts."
+  },
+  {
+    "id": "malicious-006",
+    "category": "upi_scam",
+    "expected_is_malicious": true,
+    "expected_threat_types": ["FINANCIAL_FRAUD", "SOCIAL_ENGINEERING", "CREDENTIAL_HARVESTING"],
+    "text": "Congratulations! You won Rs 5,000 cash prize in PhonePe Scratch Card. Click the collect link and enter your 6-digit UPI PIN to immediately receive the money into your bank account."
+  },
+  {
+    "id": "malicious-007",
+    "category": "government_impersonation",
+    "expected_is_malicious": true,
+    "expected_threat_types": ["IMPERSONATION", "SOCIAL_ENGINEERING", "PHISHING"],
+    "text": "Notice from Central Board of Direct Taxes: A penalty of Rs 25,000 is issued against your PAN for tax evasion. An arrest warrant will be executed within 12 hours unless you resolve it at https://incometax-filing-portal.info/penalty."
+  },
+  {
+    "id": "malicious-008",
+    "category": "social_media_takeover",
+    "expected_is_malicious": true,
+    "expected_threat_types": ["PHISHING", "IMPERSONATION", "CREDENTIAL_HARVESTING"],
+    "text": "Instagram Security Team: Copyright infringement detected on your account. Your account will be permanently deleted in 24 hours. If this is a mistake, confirm your password at https://instagram-help-centre-appeal.cf/verify."
+  },
+  {
+    "id": "malicious-009",
+    "category": "tech_support_scam",
+    "expected_is_malicious": true,
+    "expected_threat_types": ["TECH_SUPPORT_SCAM", "IMPERSONATION", "SOCIAL_ENGINEERING"],
+    "text": "Microsoft Defender Alert: Trojan Spyware detected on your computer! Personal banking logins and webcam are compromised. Call Windows Support immediately at +1-800-555-0199. Do not restart your PC."
+  },
+  {
+    "id": "malicious-010",
+    "category": "fake_refund",
+    "expected_is_malicious": true,
+    "expected_threat_types": ["FINANCIAL_FRAUD", "IMPERSONATION", "PHISHING"],
+    "text": "Amazon Billing: We charged your credit card $499.00 for annual Prime renewal. If this was not authorized by you, click http://amazon-customer-refund.biz to cancel and claim your instant full refund."
+  },
+  {
+    "id": "legitimate-001",
+    "category": "bank_statement",
+    "expected_is_malicious": false,
+    "expected_threat_types": [],
+    "text": "Your monthly e-statement for HDFC Bank account ending in 4321 for the period ending March 2025 is now generated. You can view or download it anytime by logging into your official mobile banking app."
+  },
+  {
+    "id": "legitimate-002",
+    "category": "delivery_update",
+    "expected_is_malicious": false,
+    "expected_threat_types": [],
+    "text": "Your Amazon order #402-8874123-9912401 has been dispatched with delivery agent BlueDart. Track package status directly inside your Amazon app under Your Orders."
+  },
+  {
+    "id": "legitimate-003",
+    "category": "user_otp",
+    "expected_is_malicious": false,
+    "expected_threat_types": [],
+    "text": "492104 is your verification code for signing in to your GitHub account. This code is valid for 10 minutes. If you did not make this request, check your account settings."
+  },
+  {
+    "id": "legitimate-004",
+    "category": "meeting_invite",
+    "expected_is_malicious": false,
+    "expected_threat_types": [],
+    "text": "Reminder: ScamShield AI sprint review is scheduled for tomorrow at 10:00 AM in Conference Room B. Please review the updated architecture docs prior to the session."
+  },
+  {
+    "id": "legitimate-005",
+    "category": "subscription_receipt",
+    "expected_is_malicious": false,
+    "expected_threat_types": [],
+    "text": "Thank you for your Spotify Premium renewal. Your subscription has been extended until next month. Your invoice can be viewed on your account page."
+  }
+]
