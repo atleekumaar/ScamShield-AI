@@ -1,0 +1,110 @@
+[
+  {
+    "brand": "SBI",
+    "aliases": ["state bank of india", "sbi", "onlinesbi"],
+    "official_domains": ["sbi.co.in", "onlinesbi.sbi", "statebankofindia.com"],
+    "category": "banking"
+  },
+  {
+    "brand": "HDFC",
+    "aliases": ["hdfc", "hdfc bank"],
+    "official_domains": ["hdfcbank.com", "hdfc.com"],
+    "category": "banking"
+  },
+  {
+    "brand": "ICICI",
+    "aliases": ["icici", "icicibank"],
+    "official_domains": ["icicibank.com"],
+    "category": "banking"
+  },
+  {
+    "brand": "Axis Bank",
+    "aliases": ["axis bank", "axisbank", "axis"],
+    "official_domains": ["axisbank.com"],
+    "category": "banking"
+  },
+  {
+    "brand": "Paytm",
+    "aliases": ["paytm", "paytm bank", "paytm payments bank"],
+    "official_domains": ["paytm.com", "paytmbank.com"],
+    "category": "fintech"
+  },
+  {
+    "brand": "PhonePe",
+    "aliases": ["phonepe", "phone pe"],
+    "official_domains": ["phonepe.com"],
+    "category": "fintech"
+  },
+  {
+    "brand": "PayPal",
+    "aliases": ["paypal"],
+    "official_domains": ["paypal.com"],
+    "category": "fintech"
+  },
+  {
+    "brand": "Amazon",
+    "aliases": ["amazon", "amazon prime", "amazon pay"],
+    "official_domains": ["amazon.com", "amazon.in", "amazon.co.uk"],
+    "category": "ecommerce"
+  },
+  {
+    "brand": "Flipkart",
+    "aliases": ["flipkart"],
+    "official_domains": ["flipkart.com"],
+    "category": "ecommerce"
+  },
+  {
+    "brand": "FedEx",
+    "aliases": ["fedex", "federal express"],
+    "official_domains": ["fedex.com"],
+    "category": "logistics"
+  },
+  {
+    "brand": "DHL",
+    "aliases": ["dhl", "dhl express"],
+    "official_domains": ["dhl.com"],
+    "category": "logistics"
+  },
+  {
+    "brand": "India Post",
+    "aliases": ["india post", "indiapost"],
+    "official_domains": ["indiapost.gov.in"],
+    "category": "logistics"
+  },
+  {
+    "brand": "Microsoft",
+    "aliases": ["microsoft", "office365", "outlook", "windows defender"],
+    "official_domains": ["microsoft.com", "live.com", "office.com"],
+    "category": "tech"
+  },
+  {
+    "brand": "Google",
+    "aliases": ["google", "gmail", "google drive"],
+    "official_domains": ["google.com", "gmail.com"],
+    "category": "tech"
+  },
+  {
+    "brand": "Apple",
+    "aliases": ["apple", "icloud", "apple id"],
+    "official_domains": ["apple.com", "icloud.com"],
+    "category": "tech"
+  },
+  {
+    "brand": "Instagram",
+    "aliases": ["instagram", "ig"],
+    "official_domains": ["instagram.com"],
+    "category": "social"
+  },
+  {
+    "brand": "WhatsApp",
+    "aliases": ["whatsapp"],
+    "official_domains": ["whatsapp.com"],
+    "category": "social"
+  },
+  {
+    "brand": "Netflix",
+    "aliases": ["netflix"],
+    "official_domains": ["netflix.com"],
+    "category": "streaming"
+  }
+]

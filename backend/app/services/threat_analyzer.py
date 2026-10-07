@@ -303,6 +303,23 @@ class ThreatAnalyzer:
             urls=entities.urls,
         )
 
+        # 5.5 Optional Day 2 URL Intelligence
+        url_intel = None
+        if entities.urls:
+            from backend.app.services.url_intelligence import url_intelligence_service
+            url_intel = url_intelligence_service.analyze(entities.urls[0])
+            if url_intel.brand_similarity and url_intel.brand_similarity.potential_impersonation:
+                if ThreatType.IMPERSONATION not in threat_types:
+                    threat_types.append(ThreatType.IMPERSONATION)
+                indicators.append(
+                    ThreatIndicator(
+                        category="URL_IMPERSONATION",
+                        severity=Severity.HIGH,
+                        evidence=f"Domain {url_intel.hostname} mimics brand {url_intel.brand_similarity.brand}",
+                        description="Potential brand impersonation detected in URL hostname.",
+                    )
+                )
+
         # 6. Retrieve Evidence from Knowledge Base (RAG)
         retrieved_evidence = self.rag.retrieve(
             query=f"{content} {' '.join(heuristics.matched_keywords.get('urgency', []))}",
@@ -312,6 +329,9 @@ class ThreatAnalyzer:
 
         # 7. Generate Defensive Recommendations
         recommended_actions = self._build_recommended_actions(threat_types, severity, entities)
+
+        # 8. Generate Attack Chain (Day 2 Signature Feature)
+        attack_chain = self._build_attack_chain(threat_types, severity, entities, url_intel)
 
         elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
 
@@ -334,7 +354,63 @@ class ThreatAnalyzer:
             recommended_actions=recommended_actions,
             retrieved_evidence=retrieved_evidence,
             processing_metadata=metadata,
+            attack_chain=attack_chain,
+            url_intelligence=url_intel,
         )
+
+    @staticmethod
+    def _build_attack_chain(
+        threat_types: List[ThreatType],
+        severity: Severity,
+        entities: ExtractedEntities,
+        url_intel: Optional[Any],
+    ) -> List[str]:
+        """Construct visual attack chain sequence for explainability."""
+        if severity == Severity.SAFE:
+            return ["Benign Communication", "Standard Identity Check", "No Threat Vector Detected"]
+
+        chain: List[str] = []
+
+        # Stage 1: Pretext / Impersonation
+        if entities.organizations or ThreatType.IMPERSONATION in threat_types:
+            org_name = entities.organizations[0] if entities.organizations else "Trusted Brand"
+            chain.append(f"Brand Impersonation ({org_name})")
+        else:
+            chain.append("Unsolicited Contact / Pretext")
+
+        # Stage 2: Psychological Coercion
+        if ThreatType.SOCIAL_ENGINEERING in threat_types or ThreatType.PHISHING in threat_types:
+            chain.append("Urgency & Coercion Pressure")
+        elif ThreatType.JOB_SCAM in threat_types or ThreatType.FINANCIAL_FRAUD in threat_types:
+            chain.append("Financial / Reward Incentive Bait")
+        else:
+            chain.append("Social Engineering Hook")
+
+        # Stage 3: Exploitation Vector
+        if ThreatType.CREDENTIAL_HARVESTING in threat_types:
+            chain.append("Credential / KYC Solicitation")
+        elif ThreatType.FINANCIAL_FRAUD in threat_types:
+            chain.append("Direct Fund Transfer Request")
+        else:
+            chain.append("Deceptive Call to Action")
+
+        # Stage 4: Delivery Link / Channel
+        if url_intel:
+            chain.append(f"Deceptive Link ({url_intel.hostname})")
+        elif entities.urls:
+            chain.append("Suspicious Hyperlink")
+        else:
+            chain.append("Off-Platform Redirection")
+
+        # Stage 5: Adversary Impact
+        if ThreatType.CREDENTIAL_HARVESTING in threat_types:
+            chain.append("Potential Account Takeover")
+        elif ThreatType.FINANCIAL_FRAUD in threat_types:
+            chain.append("Direct Financial Loss")
+        else:
+            chain.append("Unauthorized Compromise")
+
+        return chain
 
 
 # Global singleton instance

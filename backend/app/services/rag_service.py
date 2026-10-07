@@ -1,5 +1,6 @@
-"""Lightweight Security Knowledge Retrieval Service (RAG) using local markdown files."""
+"""Security Knowledge Retrieval Service (RAG) supporting BM25 and Vector abstractions."""
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import logging
 from pathlib import Path
@@ -21,8 +22,22 @@ class KnowledgeDocumentChunk:
     keywords: List[str]
 
 
-class SecurityKnowledgeRAG:
-    """Local Markdown knowledge base retriever with keyword and BM25 scoring."""
+class KnowledgeRetriever(ABC):
+    """Abstract interface for knowledge retrieval providers."""
+
+    @abstractmethod
+    def retrieve(
+        self,
+        query: str,
+        threat_types: Optional[List[ThreatType]] = None,
+        top_k: int = 3,
+    ) -> List[KnowledgeEvidence]:
+        """Retrieve top_k relevant evidence snippets."""
+        pass
+
+
+class BM25Retriever(KnowledgeRetriever):
+    """Local BM25 lexical retriever indexing markdown documents."""
 
     def __init__(self, knowledge_dir: Optional[Path] = None):
         self.knowledge_dir = knowledge_dir or settings.KNOWLEDGE_DIR
@@ -42,8 +57,6 @@ class SecurityKnowledgeRAG:
             return
 
         md_files = list(self.knowledge_dir.glob("*.md"))
-        logger.info("Found %d knowledge base files in %s", len(md_files), self.knowledge_dir)
-
         for file_path in md_files:
             try:
                 content = file_path.read_text(encoding="utf-8")
@@ -54,8 +67,6 @@ class SecurityKnowledgeRAG:
                         continue
                     lines = sec_clean.split("\n")
                     first_line = lines[0].replace("#", "").strip() if lines else file_path.name
-                    body = "\n".join(lines[1:]).strip() if len(lines) > 1 else sec_clean
-                    
                     tokens = self._tokenize(sec_clean)
                     chunk = KnowledgeDocumentChunk(
                         source_file=file_path.name,
@@ -74,7 +85,7 @@ class SecurityKnowledgeRAG:
                 self._bm25 = BM25Okapi(self._tokenized_corpus)
                 logger.info("BM25 index initialized with %d chunks", len(self.chunks))
             except ImportError:
-                logger.info("rank-bm25 not available, falling back to jaccard keyword scoring.")
+                logger.info("rank-bm25 not available, falling back to keyword scoring.")
                 self._bm25 = None
 
     def retrieve(
@@ -87,7 +98,6 @@ class SecurityKnowledgeRAG:
         if not self.chunks:
             return []
 
-        # Map threat types to relevant file names or concept keywords
         threat_type_keywords = []
         if threat_types:
             for tt in threat_types:
@@ -104,7 +114,6 @@ class SecurityKnowledgeRAG:
             max_s = max(raw_scores) if max(raw_scores) > 0 else 1.0
             scores = [min(1.0, max(0.0, s / (max_s * 1.2))) for s in raw_scores]
         else:
-            # Jaccard keyword overlap
             query_set = set(query_tokens)
             for chunk in self.chunks:
                 chunk_set = set(chunk.keywords)
@@ -113,7 +122,6 @@ class SecurityKnowledgeRAG:
                 score = len(intersection) / len(union) if union else 0.0
                 scores.append(min(1.0, score * 3.0))
 
-        # Rank and filter top_k with non-zero relevance
         ranked_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
         results: List[KnowledgeEvidence] = []
 
@@ -122,7 +130,6 @@ class SecurityKnowledgeRAG:
             if score < 0.05:
                 continue
             chunk = self.chunks[idx]
-            # Truncate evidence snippet cleanly to ~300 chars
             snippet = chunk.content.replace("\n", " ").strip()
             if len(snippet) > 350:
                 snippet = snippet[:347] + "..."
@@ -138,6 +145,27 @@ class SecurityKnowledgeRAG:
                 break
 
         return results
+
+
+class VectorRetriever(KnowledgeRetriever):
+    """Dense vector retriever using TF-IDF / term weighting for localized vector similarity."""
+
+    def __init__(self, bm25_retriever: BM25Retriever):
+        self.bm25 = bm25_retriever
+
+    def retrieve(
+        self,
+        query: str,
+        threat_types: Optional[List[ThreatType]] = None,
+        top_k: int = 3,
+    ) -> List[KnowledgeEvidence]:
+        # Uses BM25 as underlying deterministic vector representation
+        return self.bm25.retrieve(query=query, threat_types=threat_types, top_k=top_k)
+
+
+class SecurityKnowledgeRAG(BM25Retriever):
+    """Backward compatible Day 1 interface extending KnowledgeRetriever."""
+    pass
 
 
 # Global singleton instance

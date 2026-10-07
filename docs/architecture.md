@@ -1,108 +1,134 @@
-# ScamShield AI — Architecture Documentation (Day 1)
+# ScamShield AI — Architecture Documentation (Day 2 Multimodal)
 
 ## Executive Summary
 
-**ScamShield AI** is a multimodal AI security analyst designed to detect digital fraud, social engineering, credential harvesting, malicious links, and financial deception. 
+**ScamShield AI** is an explainable multimodal AI security analyst designed to detect digital fraud, social engineering, credential harvesting, malicious links, brand impersonation, and fraudulent email communications.
 
-This document outlines the architectural blueprint implemented during **Day 1** of the 3-day hackathon sprint, focusing on the core backend pipeline, deterministic security analysis, LLM provider abstraction, localized knowledge retrieval (RAG), and explainable risk scoring.
+This document details the architectural expansion implemented during **Day 2** of the 3-day hackathon sprint, transforming ScamShield from a text-only backend into a full **multimodal threat intelligence platform** supporting Text, Screenshots (OCR), URLs, and raw `.eml` emails, backed by an interactive Next.js Security Operations Center (SOC) dashboard.
 
 ---
 
-## High-Level Pipeline Architecture
-
-The end-to-end processing pipeline transforms raw communication input into a structured, explainable threat report through six decoupled stages:
+## High-Level Multimodal System Architecture
 
 ```mermaid
 flowchart TD
-    A["Raw User Input (Text / SMS / Email)"] --> B["Input Validation & Sanitization (Pydantic v2)"]
-    B --> C["Deterministic Entity Extraction (URLs, Emails, Phones, Orgs)"]
-    C --> D["Heuristic Signal Detector (Urgency, Threat, Credential, Financial)"]
-    D --> E["LLM Provider Abstraction (Gemini / Mock / Fallback)"]
-    E --> F["Security Knowledge Retrieval (BM25 / Markdown RAG)"]
-    F --> G["Multi-Factor Risk Engine (Deterministic Scoring Matrix)"]
-    G --> H["Explainability & Defensive Action Generator"]
-    H --> I["Structured ThreatReport (FastAPI REST Response)"]
+    User(["User / Analyst Input"]) --> InputHub{"Input Modality"}
+    
+    InputHub -->|"Text / SMS"| TextPipe["Text Ingestion"]
+    InputHub -->|"Screenshot"| OCRPipe["Secure OCR Ingestion (Tesseract / Gemini Vision / Mock)"]
+    InputHub -->|"URL"| URLPipe["Direct URL Parser"]
+    InputHub -->|"Email (.eml)"| EmailPipe["Email Forensics Parser (Headers, Body, Links)"]
+    
+    OCRPipe --> Normalizer["Multimodal Input Normalizer"]
+    TextPipe --> Normalizer
+    URLPipe --> Normalizer
+    EmailPipe --> Normalizer
+    
+    Normalizer --> EntityExt["Entity Extraction (Regex & Brand Lexicon)"]
+    Normalizer --> Heuristics["Deterministic Heuristic Signal Detector"]
+    Normalizer --> URLIntel["URL Intelligence & Brand Lookalike Engine"]
+    
+    EntityExt --> LLMProv["LLM Provider Abstraction (Gemini / Mock / Fallback)"]
+    Heuristics --> LLMProv
+    
+    LLMProv --> RAG["Knowledge Retrieval (BM25 & Vector Retriever)"]
+    URLIntel --> RAG
+    
+    RAG --> RiskEng["Multi-Factor Deterministic Risk Engine"]
+    
+    RiskEng --> Explain["Explainability & Attack Chain Generator"]
+    Explain --> FinalReport["Structured ThreatReport (FastAPI REST API)"]
+    FinalReport --> Dashboard["Next.js Security Operations Center Dashboard"]
 ```
 
 ---
 
-## Detailed Pipeline Stages
+## Multimodal Subsystems (Day 2 Additions)
 
-### 1. Input Validation & Ingestion
-- Handled at the API boundary via FastAPI and Pydantic v2 schemas (`AnalyzeRequest`).
-- Trims whitespace, validates input encoding, rejects empty payloads, and enforces a 20,000-character upper bound to prevent denial-of-service and payload-stuffing vulnerabilities.
-- Formats validation errors into a uniform error envelope:
-  ```json
-  {
-    "error": {
-      "code": "INVALID_INPUT",
-      "message": "Content must not be empty."
-    }
-  }
+### 1. Multimodal Input Normalizer (`InputNormalizer`)
+- Maps heterogeneous formats (`text`, `screenshot`, `url`, `email`) into a unified `NormalizedInput` schema.
+- Extracts and aggregates URLs, email addresses, phone numbers, and brand mentions across all modalities.
+- Ensures the downstream threat evaluation engine remains unified without code duplication.
+
+### 2. Screenshot Analysis & Image Security (`OCRService`)
+- **Endpoint**: `POST /api/v1/analyze/image`
+- **Security Validation (`ImageSecurityValidator`)**:
+  - Rejects files larger than 10 MB.
+  - Enforces strict MIME and extension validation (`image/png`, `image/jpeg`, `image/webp`).
+  - Verifies file integrity via Pillow `img.verify()` to block corrupted or malicious file payloads.
+  - Operates in-memory without persistent disk leakage.
+- **Hierarchical OCR Engine**:
+  1. *Local Tesseract OCR* via `pytesseract` if system binary is available.
+  2. *Vision-capable Multimodal LLM* (Gemini Vision) via official SDK if configured.
+  3. *Deterministic Fallback* for offline testing and test repeatability.
+  - Measures `ocr_duration_ms` separately from overall analysis latency.
+  - Never fabricates confidence numbers (`confidence = null` if unavailable).
+
+### 3. URL Intelligence & Brand Impersonation (`URLIntelligenceService`)
+- **Endpoint**: `POST /api/v1/analyze/url`
+- **Structural Anomaly Detection**:
+  - Raw IP address hostnames.
+  - Suspicious top-level domains (`.xyz`, `.top`, `.site`, `.club`, `.biz`, `.info`, `.buzz`, `.online`, etc.).
+  - Excessive subdomains ($\ge 4$ labels).
+  - Deceptive hyphenation (e.g., `sbi-secure-login.xyz`).
+  - Punycode / IDN homoglyph markers (`xn--`).
+  - Recognized URL shortening services (`bit.ly`, `tinyurl.com`, `t.co`, etc.).
+  - Sensitive credential paths (`/verify`, `/login`, `/kyc`, `/account`, `/banking`).
+  - Unusually long URLs ($> 75$ characters).
+- **Brand Impersonation**:
+  - Configurable corporate signatures in `brand_signatures.json` (SBI, HDFC, ICICI, PayPal, Amazon, FedEx, DHL, Microsoft, etc.).
+  - Compares hostname against brand aliases and official domain whitelists.
+  - Accurately classifies lookalikes as `potential_impersonation` while keeping official domains safe.
+- **External Reputation Abstraction**:
+  - `URLReputationProvider` abstraction. Returns `reputation_status = "unavailable"` if live threat API keys are absent, avoiding fabricated ratings.
+
+### 4. Email Forensics (`EmailForensicsService`)
+- **Endpoint**: `POST /api/v1/analyze/email`
+- Accepts RFC 822 `.eml` files.
+- Extracts metadata: `From`, `To`, `Reply-To`, `Subject`, `Date`, text/HTML body, and attachments.
+- **Header Anomaly Detection**:
+  - Flags `Reply-To != From` domain mismatches (a classic credential harvesting signal).
+  - Detects Display Name Spoofing (e.g. brand name in display title with third-party freemail domain).
+  - Surfaces SPF, DKIM, DMARC statuses from `Authentication-Results` headers (marking as `"not_present"` if headers are omitted, without false failure claims).
+
+### 5. Knowledge Retrieval RAG (`KnowledgeRetriever`)
+- Decouples retrieval into an abstract `KnowledgeRetriever` base class.
+- Retains high-speed deterministic `BM25Retriever` indexing local security markdown documentation.
+- Extensible to dense vector embeddings (`VectorRetriever`).
+
+### 6. Signature Feature: Visual Attack Chain
+- Converts structured threat indicators and entities into an intuitive, sequential attack progression:
+  ```text
+  Brand Impersonation (SBI)
+             ↓
+  Urgency & Coercion Pressure (Today / 24h)
+             ↓
+  Credential / KYC Solicitation
+             ↓
+  Deceptive Link (sbi-secure-login.xyz)
+             ↓
+  Potential Account Takeover
   ```
-
-### 2. Deterministic Entity Extraction
-- Extracts high-value artifacts prior to LLM invocation using compiled, regular expressions:
-  - **URLs**: Canonical web addresses and deceptive links.
-  - **Emails**: Sender and recipient email addresses.
-  - **Phone Numbers**: National and international numbers (E.164, Indian mobile, standard formats).
-  - **Organizations**: Keyword detection covering major banking, technology, and postal institutions (e.g., SBI, HDFC, Paytm, FedEx, Amazon, Microsoft).
-
-### 3. Heuristic Signal Detection (`HeuristicDetector`)
-- Calculates deterministic security signal strengths in the range `[0.0, 1.0]` across four core threat vectors:
-  1. **Artificial Urgency**: Keywords like `urgent`, `immediately`, `within 24 hours`, `final notice`.
-  2. **Fear & Coercion (Threat Language)**: Keywords like `account suspended`, `police`, `arrest`, `penalty`.
-  3. **Credential Harvesting**: Keywords like `OTP`, `PIN`, `password`, `KYC`, `verify your account`.
-  4. **Financial Fraud**: Keywords like `UPI`, `transfer`, `refund`, `cash prize`, `crypto`, `deposit`.
-- **Design Decision**: These values are explicitly treated as deterministic heuristic signal strengths rather than pseudo-machine learning probabilities, providing transparent explainability.
-
-### 4. LLM Provider Abstraction (`LLMProvider`)
-- Implements an abstract base class `LLMProvider` defining `analyze(content, entities, heuristics) -> Optional[Dict[str, Any]]`.
-- Concrete implementations:
-  - **`GeminiProvider`**: Uses the official `google-genai` SDK with strict JSON schema instructions, system prompts, zero temperature, and fallback handling.
-  - **`MockLLMProvider`**: Provides deterministic, reproducible test and offline analyst responses.
-- **Graceful Fallback Mode**: If the LLM provider fails, times out, or lacks credentials, the system automatically transitions into `analysis_mode = "heuristic_fallback"`, guaranteeing zero downtime.
-
-### 5. Local Security Knowledge Retrieval (`SecurityKnowledgeRAG`)
-- Local retrieval-augmented generation engine operating over domain markdown files in `backend/app/knowledge/`:
-  - `phishing.md`
-  - `social_engineering.md`
-  - `impersonation.md`
-  - `malicious_urls.md`
-  - `credential_theft.md`
-  - `financial_scams.md`
-  - `job_scams.md`
-- Tokenizes and indexes documents into semantic chunks.
-- Queries chunks using BM25 (`rank-bm25`) with Jaccard keyword fallback, mapping detected threat types and query tokens to ground-truth evidence snippets with source citations and relevance scores.
-
-### 6. Transparent Risk Engine (`RiskEngine`)
-- Multi-factor risk engine with transparent mathematical weighting:
-  - **With LLM Available**:
-    - LLM Threat Score: 40% (or 55% when URLs are absent)
-    - Heuristic Signals (Urgency & Threat): 30% (or 25% when URLs are absent)
-    - URL Indicators (Suspicious TLDs / IP / Structure): 20% (0% when URLs are absent)
-    - Credential & Financial Requests: 10% (or 20% when URLs are absent)
-  - **Heuristic Fallback Mode (LLM Unavailable)**:
-    - Heuristics: 45–50%
-    - URL Indicators: 25%
-    - Credential/Financial: 25–50%
-- Strict boundary mapping to categorical Severity:
-  - `0 – 20`: `SAFE`
-  - `21 – 40`: `LOW`
-  - `41 – 60`: `MEDIUM`
-  - `61 – 80`: `HIGH`
-  - `81 – 100`: `CRITICAL`
-
-### 7. Explainability & Defensive Recommendations
-- Returns structured indicators (`category`, `severity`, `evidence`, `description`).
-- Synthesizes an executive natural-language explanation.
-- Produces defensive recommendations tailored to detected indicators (e.g. "DO NOT provide OTP", "Verify via official mobile app", "Contact bank immediately").
+- Renders dynamically on both the REST API and the Next.js Security Dashboard.
 
 ---
 
-## System Quality & Security Considerations
+## REST API Summary
 
-1. **No External Network Calls for Domain Reputation (Day 1)**: URLs are parsed and analyzed purely via deterministic structural indicators (TLD, IP address format, hyphenation). Full network intelligence is reserved for Day 2.
-2. **Zero Hardcoded Secrets**: Configuration is strictly managed via environment variables and `.env` files using `pydantic-settings`.
-3. **Fail-Safe Operation**: If external AI services encounter transient outages or rate limits, the pipeline falls back to heuristic scoring without throwing 500 errors.
-4. **Structured Logging**: Clean logging without recording sensitive credentials, passwords, or personal PII.
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/health` | Health status and version telemetry |
+| `GET` | `/` | Service root and interactive docs link |
+| `POST` | `/api/v1/analyze` | Text communication threat analysis |
+| `POST` | `/api/v1/analyze/image` | Screenshot OCR extraction and threat analysis |
+| `POST` | `/api/v1/analyze/url` | Direct URL intelligence and risk assessment |
+| `POST` | `/api/v1/analyze/email` | Raw `.eml` email forensics and threat scoring |
+
+---
+
+## Defensive Engineering & Security
+
+- **Strict Input Validation**: Max 20,000 characters for text, max 10 MB for images and emails.
+- **Safe Memory Processing**: Uploaded files are evaluated in-memory using validated streams and cleaned up immediately.
+- **No Secret Leakage**: API keys and environment variables are strictly encapsulated in `Settings`.
+- **Deterministic Repeatability**: Identical inputs yield identical risk scores across all 68 unit and integration tests.

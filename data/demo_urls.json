@@ -1,0 +1,42 @@
+[
+  {
+    "id": "url-001",
+    "url": "https://sbi-secure-login.xyz/verify",
+    "expected_is_malicious": true,
+    "expected_brand": "SBI",
+    "expected_signals": ["SUSPICIOUS_TLD", "DECEPTIVE_HYPHENATION", "CREDENTIAL_HARVESTING_PATH"],
+    "description": "Suspicious banking lookalike domain mimicking State Bank of India."
+  },
+  {
+    "id": "url-002",
+    "url": "http://192.168.1.105:8080/paypal/login.php",
+    "expected_is_malicious": true,
+    "expected_brand": "PayPal",
+    "expected_signals": ["RAW_IP_HOSTNAME", "CREDENTIAL_HARVESTING_PATH"],
+    "description": "Raw IP address hosting a fake PayPal login portal."
+  },
+  {
+    "id": "url-003",
+    "url": "https://fedex-parcel-update.top/tracking",
+    "expected_is_malicious": true,
+    "expected_brand": "FedEx",
+    "expected_signals": ["SUSPICIOUS_TLD", "DECEPTIVE_HYPHENATION"],
+    "description": "Deceptive courier update link soliciting fake parcel fees."
+  },
+  {
+    "id": "url-004",
+    "url": "https://www.onlinesbi.sbi/portal/index.html",
+    "expected_is_malicious": false,
+    "expected_brand": "SBI",
+    "expected_signals": [],
+    "description": "Official State Bank of India Internet banking portal."
+  },
+  {
+    "id": "url-005",
+    "url": "https://github.com/features/actions",
+    "expected_is_malicious": false,
+    "expected_brand": null,
+    "expected_signals": [],
+    "description": "Legitimate enterprise software portal."
+  }
+]

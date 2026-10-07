@@ -1,42 +1,58 @@
 # ScamShield AI
 
-> Multimodal AI Security Analyst for digital fraud, phishing, and scam detection.
+> Multimodal AI Security Analyst for digital fraud, phishing, screenshot OCR, and threat intelligence.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python: 3.12+](https://img.shields.io/badge/Python-3.12%2B-brightgreen.svg)]()
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-teal.svg)](https://fastapi.tiangolo.com)
+[![Next.js: 14](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org)
 [![Pydantic: v2](https://img.shields.io/badge/Pydantic-v2-red.svg)](https://docs.pydantic.dev)
+[![Tests: 68 Passed](https://img.shields.io/badge/Tests-68%20Passed-brightgreen.svg)]()
 
 ---
 
 ## Overview
 
-**ScamShield AI** is an explainable cybersecurity intelligence assistant designed to protect consumers and organizations from social engineering, phishing, fake delivery notices, fraudulent job postings, malicious URLs, and unauthorized financial debits.
+**ScamShield AI** is an explainable cybersecurity intelligence assistant designed to protect consumers and organizations from social engineering, phishing, fake delivery notices, fraudulent job postings, malicious URLs, credential harvesting, and email fraud.
 
-This repository represents the **Day 1 Milestone** of a 3-day hackathon sprint, delivering a fully functional, tested, end-to-end backend threat analysis pipeline.
+### Day 2 Milestone
+Day 2 transforms ScamShield into a **multimodal threat intelligence product** supporting:
+- **Text & Messages**: Instant multi-factor risk evaluation and heuristic analysis.
+- **Screenshot OCR Analysis**: Upload PNG/JPEG/WEBP screenshots of SMS, WhatsApp, or fake portals.
+- **URL Intelligence & Brand Lookalikes**: Structural anomaly scanning and corporate brand impersonation detection.
+- **Email Forensics**: Raw `.eml` header analysis, Reply-To mismatch detection, and SPF/DKIM/DMARC status.
+- **Interactive Security Dashboard**: Modern Next.js cybersecurity Operations Center interface.
 
 ---
 
-## Day 1 Architecture Pipeline
+## Multimodal Pipeline Architecture
 
 ```text
-User Text Input
-    ↓
-Input Validation & Sanitization (Pydantic v2)
-    ↓
-Deterministic Entity Extraction (URLs, Emails, Phones, Orgs)
-    ↓
-Heuristic Signal Detection (Urgency, Threat, Credential, Financial)
-    ↓
-LLM Provider Abstraction (Gemini / Mock / Heuristic Fallback)
-    ↓
-Security Knowledge Retrieval (Local Markdown RAG via BM25)
-    ↓
-Multi-Factor Risk Engine (Deterministic Scoring Matrix)
-    ↓
-Explainability & Action Generator
-    ↓
-Structured Threat Report (FastAPI REST API)
+                     SCAMSHIELD AI
+                          │
+         ┌────────────────┼────────────────┐
+         ↓                ↓                ↓
+       TEXT          SCREENSHOT           URL
+         │                │                │
+         │               OCR               │
+         │                │                │
+         └────────────────┼────────────────┘
+                          ↓
+                  INPUT NORMALIZER
+                          ↓
+               THREAT ANALYSIS ENGINE
+                          ↓
+              URL / ENTITY INTELLIGENCE
+                          ↓
+                     SECURITY RAG
+                          ↓
+                     RISK ENGINE
+                          ↓
+                   EXPLAINABILITY
+                          ↓
+                  THREAT REPORT
+                          ↓
+                SECURITY DASHBOARD
 ```
 
 See [`docs/architecture.md`](docs/architecture.md) for full architectural documentation.
@@ -50,26 +66,31 @@ ScamShield-AI/
 ├── backend/
 │   ├── app/
 │   │   ├── __init__.py
-│   │   ├── main.py                     # FastAPI application entrypoint
-│   │   ├── config.py                   # Pydantic-settings environment config
+│   │   ├── main.py                     # FastAPI app, CORS, error handling
+│   │   ├── config.py                   # Pydantic-settings config
 │   │   │
 │   │   ├── api/
 │   │   │   ├── __init__.py
-│   │   │   ├── analyze.py              # POST /api/v1/analyze
+│   │   │   ├── analyze.py              # Text, Image, URL, and Email routes
 │   │   │   └── health.py               # GET /health
 │   │   │
 │   │   ├── services/
 │   │   │   ├── __init__.py
-│   │   │   ├── threat_analyzer.py      # Core analysis coordinator
+│   │   │   ├── threat_analyzer.py      # Core analysis pipeline orchestrator
 │   │   │   ├── risk_engine.py          # Deterministic risk engine & heuristics
-│   │   │   ├── rag_service.py          # Local markdown knowledge retriever
-│   │   │   └── llm_provider.py         # LLM abstraction (Gemini + Mock)
+│   │   │   ├── ocr_service.py          # Image security & OCR engine
+│   │   │   ├── url_intelligence.py     # Structural URL signals & brand lookalikes
+│   │   │   ├── email_forensics.py      # RFC 822 email parser & header anomalies
+│   │   │   ├── input_normalizer.py     # Multimodal normalization
+│   │   │   ├── rag_service.py          # BM25 & Vector knowledge retriever
+│   │   │   └── llm_provider.py         # LLM provider abstraction (Gemini + Mock)
 │   │   │
 │   │   ├── models/
 │   │   │   ├── __init__.py
-│   │   │   └── schemas.py              # Request/Response schemas & enums
+│   │   │   └── schemas.py              # Strongly-typed Pydantic v2 domain schemas
 │   │   │
-│   │   └── knowledge/                  # Security knowledge base
+│   │   └── knowledge/                  # Security knowledge base & brand signatures
+│   │       ├── brand_signatures.json
 │   │       ├── phishing.md
 │   │       ├── social_engineering.md
 │   │       ├── impersonation.md
@@ -78,19 +99,27 @@ ScamShield-AI/
 │   │       ├── financial_scams.md
 │   │       └── job_scams.md
 │   │
-│   ├── tests/
-│   │   ├── __init__.py
-│   │   ├── test_health.py              # Health check & root tests
-│   │   ├── test_risk_engine.py         # Boundary & heuristic tests
-│   │   ├── test_analyzer.py            # Threat scenarios & entity extraction
-│   │   ├── test_dataset.py             # Sample dataset verification
-│   │   └── test_api.py                 # REST endpoint integration tests
+│   ├── tests/                          # 68 Automated unit & integration tests
+│   │   ├── test_analyzer.py
+│   │   ├── test_api.py
+│   │   ├── test_dataset.py
+│   │   ├── test_email_forensics.py
+│   │   ├── test_health.py
+│   │   ├── test_multimodal_api.py
+│   │   ├── test_ocr.py
+│   │   ├── test_risk_engine.py
+│   │   └── test_url_intelligence.py
 │   │
 │   ├── requirements.txt
 │   └── .env.example
 │
+├── frontend/                           # Next.js 14 + Tailwind CSS Security SOC Dashboard
+│
 ├── data/
-│   └── sample_messages.json            # 10 malicious & 5 legitimate test cases
+│   ├── demo_screenshots/              # Realistic demo scam screenshots
+│   ├── demo_emails/                    # Sample phishing & legitimate .eml files
+│   ├── demo_urls.json                  # URL evaluation test suite
+│   └── sample_messages.json            # 10 malicious & 5 legitimate ground-truth samples
 │
 ├── docs/
 │   └── architecture.md                 # System architecture documentation
@@ -105,209 +134,125 @@ ScamShield-AI/
 ## Quick Start
 
 ### 1. Prerequisites
-- Python 3.12 or higher
-- pip
+- Python 3.12+
+- Node.js 18+ & npm
 
-### 2. Installation
-Clone the repository and install dependencies:
+### 2. Backend Setup
 
 ```bash
-git clone https://github.com/your-username/ScamShield-AI.git
+# Clone the repository
+git clone https://github.com/atleekumaar/ScamShield-AI.git
 cd ScamShield-AI
 
 # Install backend dependencies
 pip install -r backend/requirements.txt
-```
 
-### 3. Environment Configuration
-Copy the sample environment file:
-
-```bash
+# Configure environment
 cp backend/.env.example backend/.env
-```
 
-Configure your environment variables in `backend/.env`:
-
-```env
-ENVIRONMENT=development
-PORT=8000
-HOST=0.0.0.0
-LOG_LEVEL=INFO
-
-# LLM Configuration: gemini, mock
-LLM_PROVIDER=gemini
-LLM_API_KEY=your_gemini_api_key_here
-LLM_MODEL=gemini-2.5-flash
-LLM_TIMEOUT_SECONDS=10
-
-MAX_INPUT_LENGTH=20000
-```
-
-> **Note:** If `LLM_API_KEY` is not provided or if external API calls fail, the backend automatically falls back to deterministic heuristic analysis (`analysis_mode = "heuristic_fallback"`).
-
-### 4. Running the Server
-
-```bash
+# Run FastAPI backend
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 The API will be available at:
-- **API Base:** `http://localhost:8000`
-- **Interactive Swagger Docs:** `http://localhost:8000/docs`
-- **ReDoc:** `http://localhost:8000/redoc`
+- **Base URL:** `http://localhost:8000`
+- **Swagger Documentation:** `http://localhost:8000/docs`
+- **Health Check:** `http://localhost:8000/health`
+
+### 3. Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The Security Dashboard will be available at `http://localhost:3000`.
 
 ---
 
 ## API Reference
 
-### Health Check
-
-**Endpoint:** `GET /health`
-
-**Response (200 OK):**
+### 1. Health Check
+`GET /health`
 ```json
 {
   "status": "healthy",
   "service": "scamshield-api",
-  "version": "0.1.0"
+  "version": "0.2.0"
 }
 ```
+
+### 2. Text Analysis
+`POST /api/v1/analyze`
+```json
+{
+  "content": "URGENT! Your SBI account has been suspended today. Complete KYC verification at https://sbi-secure-login.xyz/verify",
+  "input_type": "text"
+}
+```
+
+### 3. Screenshot Analysis
+`POST /api/v1/analyze/image` (Multipart Form Upload)
+- Accepts: PNG, JPEG, WEBP ($\le 10$ MB)
+- Returns: `extracted_text`, `ocr_metadata`, and `threat_report`.
+
+### 4. URL Intelligence
+`POST /api/v1/analyze/url`
+```json
+{
+  "url": "https://sbi-secure-login.xyz/verify"
+}
+```
+Returns:
+- `signals` (Suspicious TLD, deceptive hyphenation, credential path)
+- `brand_similarity` (`brand: "SBI"`, `potential_impersonation: true`)
+- `risk_score`
+
+### 5. Email Forensics
+`POST /api/v1/analyze/email` (Multipart Form Upload)
+- Accepts: `.eml` file ($\le 10$ MB)
+- Returns: `headers` (From, Reply-To, Reply-To mismatch, SPF, DKIM, DMARC), `attachments`, and `threat_report`.
 
 ---
 
-### Threat Analysis
+## Signature Feature: Attack Chain Explainability
 
-**Endpoint:** `POST /api/v1/analyze`
+Instead of plain text explanations, ScamShield synthesizes a visual, stepwise attack progression:
 
-**Request Body:**
-```json
-{
-  "content": "URGENT! Your SBI account will be suspended today. Complete KYC verification immediately at https://sbi-secure-login.xyz/verify",
-  "input_type": "text",
-  "language": "en"
-}
-```
-
-**Response Body (200 OK):**
-```json
-{
-  "analysis_id": "97e68cf2-0260-4966-9df3-ccebe131828f",
-  "risk_score": 81.9,
-  "severity": "CRITICAL",
-  "threat_types": [
-    "PHISHING",
-    "IMPERSONATION",
-    "SOCIAL_ENGINEERING",
-    "CREDENTIAL_HARVESTING",
-    "MALICIOUS_URL"
-  ],
-  "confidence": 0.90,
-  "indicators": [
-    {
-      "category": "CREDENTIAL_HARVESTING",
-      "severity": "CRITICAL",
-      "evidence": "Verification / suspension demands",
-      "description": "Urges user to verify credentials under threat of account action."
-    },
-    {
-      "category": "IMPERSONATION",
-      "severity": "HIGH",
-      "evidence": "Claims representation of SBI",
-      "description": "Message impersonates a reputable corporate or banking brand."
-    },
-    {
-      "category": "SUSPICIOUS_LINK",
-      "severity": "HIGH",
-      "evidence": "https://sbi-secure-login.xyz/verify",
-      "description": "Directs user to an external link of questionable origin."
-    },
-    {
-      "category": "URGENCY",
-      "severity": "HIGH",
-      "evidence": "Artificial deadline pressure",
-      "description": "Leverages urgency to bypass critical thinking."
-    }
-  ],
-  "extracted_entities": {
-    "urls": [
-      "https://sbi-secure-login.xyz/verify"
-    ],
-    "emails": [],
-    "phone_numbers": [],
-    "organizations": [
-      "SBI"
-    ]
-  },
-  "explanation": "This message exhibits high-risk indicators characteristic of PHISHING, IMPERSONATION, CREDENTIAL_HARVESTING.",
-  "recommended_actions": [
-    "DO NOT click or follow any suspicious or unverified hyperlinks.",
-    "DO NOT provide OTP, password, PIN, CVV, or personal identity numbers.",
-    "Verify the claim directly by contacting the claimed organization (SBI) through official, verified contact channels.",
-    "Report this communication as suspicious to your email provider or mobile network operator.",
-    "If credentials or payment details were already submitted, immediately notify your financial institution to freeze relevant accounts."
-  ],
-  "retrieved_evidence": [
-    {
-      "source": "malicious_urls.md",
-      "relevance": 0.82,
-      "evidence": "## Indicators of Malicious Links 1. Typosquatting & Lookalike Domains: Minor spelling alterations, homoglyphs, or character replacements (e.g., sbi-secure-login.xyz)..."
-    },
-    {
-      "source": "phishing.md",
-      "relevance": 0.74,
-      "evidence": "## Key Indicators 1. Urgent or Coercive Language: Threats of immediate account closure, legal prosecution, or service suspension within a tight timeframe..."
-    }
-  ],
-  "processing_metadata": {
-    "analysis_mode": "hybrid_ai",
-    "model_used": "gemini-2.5-flash",
-    "duration_ms": 142.3,
-    "timestamp": "2026-10-06T18:25:36.590271Z"
-  }
-}
+```text
+ATTACK CHAIN:
+[ Brand Impersonation (SBI) ]
+             ↓
+[ Urgency & Coercion Pressure ]
+             ↓
+[ Credential / KYC Solicitation ]
+             ↓
+[ Deceptive Link (sbi-secure-login.xyz) ]
+             ↓
+[ Potential Account Takeover ]
 ```
 
 ---
 
 ## Testing
 
-Run the automated test suite with verbose reporting:
+Run all 68 automated tests:
 
 ```bash
 python -m pytest backend/tests/ -v
 ```
 
-### Coverage Highlights:
-- **`test_health.py`**: Health check and root metadata responses.
-- **`test_risk_engine.py`**: Exact boundary tests (0, 20, 21, 40, 41, 60, 61, 80, 81, 100), heuristic signal extraction, URL heuristic checks, and fallback weighting.
-- **`test_analyzer.py`**: Archetype evaluations (phishing, legitimate messages, job scams, financial scams) and entity extraction (single URL, multiple URLs, no URLs, phones, emails, organizations).
-- **`test_dataset.py`**: Complete automated evaluation over the sample dataset (`data/sample_messages.json`), verifying high risk on 10 malicious samples and zero false positives on 5 legitimate samples.
-- **`test_api.py`**: Integration tests covering success payloads, empty input validation (`422 INVALID_INPUT`), oversized inputs (>20,000 characters), and missing fields.
+All 68 tests pass in $\sim 1.5$ seconds, covering OCR validation, URL intelligence, email parsing, risk boundaries, dataset accuracy, and REST endpoints.
 
 ---
 
-## Day 1 Limitations
+## Day 3 Roadmap
 
-1. **No External Domain Reputation**: URL analysis is purely heuristic (TLD check, IP hostnames, hyphenation) without external DNS, WHOIS, or threat intelligence network calls.
-2. **Text-Only Ingestion**: Multimodal inputs (images, screenshots, PDF attachments) and OCR extraction are not yet integrated.
-3. **Local BM25 Knowledge Base**: Uses local markdown chunks rather than high-dimensional vector embeddings with vector stores.
-4. **No Persistent History**: Threat reports are evaluated on-the-fly and returned in REST responses without persistent database storage.
-
----
-
-## Roadmap
-
-### Day 2: Multimodal Intelligence & Deep URL Analysis
-- [ ] OCR pipeline for screenshot analysis (Tesseract / Vision AI)
-- [ ] Live URL analysis & domain age / WHOIS verification
-- [ ] Email header analyzer (SPF, DKIM, DMARC parsing)
-- [ ] Dense vector embeddings for security knowledge base
-
-### Day 3: Frontend Security Dashboard & Integration
-- [ ] Interactive React / Next.js security analyst dashboard
 - [ ] Real-time threat feed and false positive feedback loop
-- [ ] Browser extension & WhatsApp / SMS forwarding webhook
-- [ ] Final demo presentation & packaging
+- [ ] Browser extension companion for instant link inspection
+- [ ] WhatsApp & SMS webhook forwarding integration
+- [ ] Final hackathon demo packaging and video walkthrough
 
 ---
 
