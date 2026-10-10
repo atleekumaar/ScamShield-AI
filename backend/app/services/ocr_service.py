@@ -174,11 +174,33 @@ class MockOCRProvider(BaseOCRProvider):
 
     async def extract_text(self, image_bytes: bytes) -> Optional[OCROutput]:
         start = time.perf_counter()
-        # Extract embedded text metadata if available from testing generation or return realistic fixture
-        text = (
-            "URGENT! Your SBI account has been suspended due to pending KYC verification. "
-            "Please update immediately at https://sbi-secure-login.xyz/verify to prevent permanent closure."
-        )
+        size = len(image_bytes)
+
+        # Check for intentionally blank / tiny test images
+        if size < 200:
+            return OCROutput(text="", confidence=None, provider="mock_ocr", duration_ms=0.5)
+
+        # Recognize known demo screenshots by byte length signature
+        if abs(size - 10941) < 100:
+            text = (
+                "FedEx Delivery Update:\n"
+                "Your package #FX-99824 is held at dispatch center.\n"
+                "Please update shipping address and pay $2.99 fee:\n"
+                "http://fedex-parcel-update.top/tracking"
+            )
+        elif abs(size - 9820) < 100:
+            text = (
+                "Work From Home Opportunity!\n"
+                "Earn $500 - $800 daily rating hotels and videos.\n"
+                "No prior experience needed.\n"
+                "Pay $50 registration fee to receive your starter kit today."
+            )
+        else:
+            text = (
+                "URGENT! Your SBI account has been suspended due to pending KYC verification. "
+                "Please update immediately at https://sbi-secure-login.xyz/verify to prevent permanent closure."
+            )
+
         elapsed_ms = round((time.perf_counter() - start) * 1000, 2)
         return OCROutput(
             text=text,

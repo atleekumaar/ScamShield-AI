@@ -150,6 +150,47 @@ export default function Home() {
     }
   };
 
+  const loadDemoScreenshot = async (filename: string) => {
+    try {
+      setErrorMsg(null);
+      setResult(null);
+      const res = await fetch(`/demo_screenshots/${filename}`);
+      if (!res.ok) throw new Error("Could not load sample image asset");
+      const blob = await res.blob();
+      const file = new File([blob], filename, { type: "image/png" });
+      setSelectedFile(file);
+      setFilePreview(URL.createObjectURL(blob));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to load sample";
+      setErrorMsg(msg);
+    }
+  };
+
+  const loadDemoEmail = async (filename: string) => {
+    try {
+      setErrorMsg(null);
+      setResult(null);
+      const res = await fetch(`/demo_emails/${filename}`);
+      if (!res.ok) throw new Error("Could not load sample email asset");
+      const blob = await res.blob();
+      const file = new File([blob], filename, { type: "message/rfc822" });
+      setSelectedFile(file);
+      setFilePreview(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to load sample";
+      setErrorMsg(msg);
+    }
+  };
+
+  const resetAnalysis = () => {
+    setTextContent("");
+    setUrlContent("");
+    setSelectedFile(null);
+    setFilePreview(null);
+    setResult(null);
+    setErrorMsg(null);
+  };
+
   const runAnalysis = async () => {
     setErrorMsg(null);
     setResult(null);
@@ -204,8 +245,9 @@ export default function Home() {
         if (!res.ok) throw new Error(data?.error?.message || "Email analysis failed.");
         setResult(data);
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || "Failed to communicate with ScamShield API.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to communicate with ScamShield API.";
+      setErrorMsg(message);
     } finally {
       clearInterval(stepInterval);
       setLoading(false);
@@ -342,6 +384,32 @@ export default function Home() {
 
         {activeTab === "screenshot" && (
           <div className="space-y-4">
+            <div className="space-y-2">
+              <span className="text-xs text-slate-500 font-mono">DEMO SCREENSHOTS:</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => loadDemoScreenshot("bank_kyc_scam.png")}
+                  className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 px-3 py-1.5 rounded-lg transition"
+                >
+                  📸 Bank KYC Scam
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadDemoScreenshot("delivery_scam.png")}
+                  className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 px-3 py-1.5 rounded-lg transition"
+                >
+                  📸 Delivery Scam
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadDemoScreenshot("job_scam.png")}
+                  className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 px-3 py-1.5 rounded-lg transition"
+                >
+                  📸 Job Offer Scam
+                </button>
+              </div>
+            </div>
             <div className="border-2 border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-6 text-center space-y-3">
               <input
                 type="file"
@@ -353,7 +421,7 @@ export default function Home() {
               <label htmlFor="file-upload" className="cursor-pointer block space-y-2">
                 <div className="mx-auto h-12 w-12 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400">
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div className="text-sm text-slate-300 font-medium">
@@ -364,6 +432,7 @@ export default function Home() {
             </div>
             {filePreview && (
               <div className="relative max-h-48 overflow-hidden rounded-xl border border-slate-800 bg-slate-950 flex justify-center p-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={filePreview} alt="Preview" className="max-h-44 object-contain rounded-lg" />
               </div>
             )}
@@ -405,6 +474,25 @@ export default function Home() {
 
         {activeTab === "email" && (
           <div className="space-y-4">
+            <div className="space-y-2">
+              <span className="text-xs text-slate-500 font-mono">DEMO EMAILS (.EML):</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => loadDemoEmail("phishing_reply_to_mismatch.eml")}
+                  className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 px-3 py-1.5 rounded-lg transition"
+                >
+                  📧 Phishing (Reply-To Mismatch)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadDemoEmail("legitimate_newsletter.eml")}
+                  className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 px-3 py-1.5 rounded-lg transition"
+                >
+                  📧 Legitimate Newsletter
+                </button>
+              </div>
+            </div>
             <div className="border-2 border-dashed border-slate-800 hover:border-slate-700 bg-slate-950/60 rounded-xl p-6 text-center space-y-3">
               <input
                 type="file"
@@ -429,7 +517,7 @@ export default function Home() {
         )}
 
         {/* Action Button */}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-wrap items-center gap-3 pt-2">
           <button
             onClick={runAnalysis}
             disabled={loading}
@@ -449,6 +537,15 @@ export default function Home() {
               </>
             )}
           </button>
+          {(result || textContent || urlContent || selectedFile || errorMsg) && (
+            <button
+              onClick={resetAnalysis}
+              disabled={loading}
+              className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-300 font-medium text-sm rounded-xl transition border border-slate-700 flex items-center justify-center space-x-1"
+            >
+              <span>Reset Analysis</span>
+            </button>
+          )}
         </div>
 
         {/* Loading Progress State */}
@@ -593,7 +690,7 @@ export default function Home() {
               {result.extracted_text && (
                 <div className="mt-3 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs font-mono text-slate-300">
                   <div className="text-slate-500 mb-1">EXTRACTED OCR TEXT ({result.ocr_metadata?.provider}):</div>
-                  <div>"{result.extracted_text}"</div>
+                  <div>&ldquo;{result.extracted_text}&rdquo;</div>
                 </div>
               )}
             </div>
@@ -711,7 +808,7 @@ export default function Home() {
                       </span>
                     </div>
                     <div className="text-xs text-rose-300 font-mono bg-rose-500/10 p-2 rounded border border-rose-500/20">
-                      "{ind.evidence}"
+                      &ldquo;{ind.evidence}&rdquo;
                     </div>
                     {ind.description && (
                       <p className="text-xs text-slate-400">{ind.description}</p>
@@ -762,7 +859,7 @@ export default function Home() {
                       <span className="text-indigo-400">{ev.source}</span>
                       <span>Rel: {ev.relevance}</span>
                     </div>
-                    <p className="text-slate-300 text-[11px] line-clamp-3">"{ev.evidence}"</p>
+                    <p className="text-slate-300 text-[11px] line-clamp-3">&ldquo;{ev.evidence}&rdquo;</p>
                   </div>
                 ))}
               </div>

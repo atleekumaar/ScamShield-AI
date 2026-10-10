@@ -1,10 +1,10 @@
-# ScamShield AI — Architecture Documentation (Day 2 Multimodal)
+# ScamShield AI — Architecture Documentation (Day 3 Hackathon Release)
 
 ## Executive Summary
 
 **ScamShield AI** is an explainable multimodal AI security analyst designed to detect digital fraud, social engineering, credential harvesting, malicious links, brand impersonation, and fraudulent email communications.
 
-This document details the architectural expansion implemented during **Day 2** of the 3-day hackathon sprint, transforming ScamShield from a text-only backend into a full **multimodal threat intelligence platform** supporting Text, Screenshots (OCR), URLs, and raw `.eml` emails, backed by an interactive Next.js Security Operations Center (SOC) dashboard.
+This document details the complete multimodal architecture finalized for the **Day 3 Hackathon Release**, uniting Text, Screenshots (OCR), URL Intelligence, and raw RFC 822 Email Forensics with a deterministic hybrid risk engine, security knowledge RAG, explainable attack chains, and an interactive Next.js Operations Center.
 
 ---
 
@@ -127,8 +127,9 @@ flowchart TD
 ---
 
 ## Defensive Engineering & Security
-
+ 
 - **Strict Input Validation**: Max 20,000 characters for text, max 10 MB for images and emails.
 - **Safe Memory Processing**: Uploaded files are evaluated in-memory using validated streams and cleaned up immediately.
 - **No Secret Leakage**: API keys and environment variables are strictly encapsulated in `Settings`.
-- **Deterministic Repeatability**: Identical inputs yield identical risk scores across all 68 unit and integration tests.
+- **Deterministic Repeatability**: Identical inputs yield identical risk scores across all 73 automated unit and integration tests.
+- **Quantitative Benchmark**: Verified on `data/sample_messages.json` (10 malicious, 5 benign) with 100% Accuracy, 100% Precision, 100% Recall, and F1 = 1.0000 via `backend/evaluation/evaluate_dataset.py`.

@@ -7,7 +7,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-teal.svg)](https://fastapi.tiangolo.com)
 [![Next.js: 14](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org)
 [![Pydantic: v2](https://img.shields.io/badge/Pydantic-v2-red.svg)](https://docs.pydantic.dev)
-[![Tests: 68 Passed](https://img.shields.io/badge/Tests-68%20Passed-brightgreen.svg)]()
+[![Tests: 73 Passed](https://img.shields.io/badge/Tests-73%20Passed-brightgreen.svg)]()
+[![Evaluation: 100% F1](https://img.shields.io/badge/Evaluation-100%25%20F1-brightgreen.svg)]()
 
 ---
 
@@ -15,13 +16,10 @@
 
 **ScamShield AI** is an explainable cybersecurity intelligence assistant designed to protect consumers and organizations from social engineering, phishing, fake delivery notices, fraudulent job postings, malicious URLs, credential harvesting, and email fraud.
 
-### Day 2 Milestone
-Day 2 transforms ScamShield into a **multimodal threat intelligence product** supporting:
-- **Text & Messages**: Instant multi-factor risk evaluation and heuristic analysis.
-- **Screenshot OCR Analysis**: Upload PNG/JPEG/WEBP screenshots of SMS, WhatsApp, or fake portals.
-- **URL Intelligence & Brand Lookalikes**: Structural anomaly scanning and corporate brand impersonation detection.
-- **Email Forensics**: Raw `.eml` header analysis, Reply-To mismatch detection, and SPF/DKIM/DMARC status.
-- **Interactive Security Dashboard**: Modern Next.js cybersecurity Operations Center interface.
+### Hackathon Milestones
+- **Day 1**: Core text threat intelligence pipeline, deterministic risk engine, BM25 security RAG, and FastAPI REST endpoints.
+- **Day 2**: Multimodal expansion with screenshot OCR (`/analyze/image`), structural URL intelligence & brand lookalike matching (`/analyze/url`), and RFC 822 email forensics (`/analyze/email`).
+- **Day 3 (Final Release)**: Production hardening, quantitative benchmarking (100% F1 on ground truth dataset), one-click startup scripts (`start.ps1`, `start.sh`), Next.js SOC Dashboard with reset controls and instant demo loaders for all 4 modalities.
 
 ---
 
@@ -133,12 +131,26 @@ ScamShield-AI/
 
 ## Quick Start
 
-### 1. Prerequisites
-- Python 3.12+
-- Node.js 18+ & npm
+### 1. One-Click Launch (Recommended)
 
-### 2. Backend Setup
+**Windows (PowerShell):**
+```powershell
+.\start.ps1
+```
 
+**Linux / macOS (Bash):**
+```bash
+chmod +x ./start.sh
+./start.sh
+```
+
+These scripts verify Python & Node dependencies, spin up the FastAPI backend on `http://localhost:8000`, and start the Next.js frontend on `http://localhost:3000`.
+
+---
+
+### 2. Manual Step-by-Step Setup
+
+#### Backend Setup
 ```bash
 # Clone the repository
 git clone https://github.com/atleekumaar/ScamShield-AI.git
@@ -159,8 +171,7 @@ The API will be available at:
 - **Swagger Documentation:** `http://localhost:8000/docs`
 - **Health Check:** `http://localhost:8000/health`
 
-### 3. Frontend Setup
-
+#### Frontend Setup
 ```bash
 cd frontend
 npm install
@@ -235,24 +246,41 @@ ATTACK CHAIN:
 
 ---
 
-## Testing
+## Quantitative Evaluation Benchmark
 
-Run all 68 automated tests:
+Run the automated evaluation on the curated benchmark dataset (`data/sample_messages.json`):
+
+```bash
+python backend/evaluation/evaluate_dataset.py
+```
+
+### Benchmark Results (15 Ground-Truth Samples):
+- **Total Samples Evaluated**: 15 (10 Malicious Threats, 5 Legitimate Communications)
+- **Accuracy**: **100.0%** (15 / 15 correct classifications)
+- **Precision**: **1.0000** (0 false positives)
+- **Recall**: **1.0000** (0 false negatives)
+- **F1 Score**: **1.0000**
+- **Average Threat Latency**: ~35 ms
+
+---
+
+## Automated Test Suite
+
+Run all 73 automated unit, integration, and security edge case tests:
 
 ```bash
 python -m pytest backend/tests/ -v
 ```
 
-All 68 tests pass in $\sim 1.5$ seconds, covering OCR validation, URL intelligence, email parsing, risk boundaries, dataset accuracy, and REST endpoints.
+All 73 tests pass in $\sim 2.5$ seconds, covering OCR validation, URL intelligence, email parsing, risk boundaries, dataset accuracy, edge case resilience, and REST endpoints.
 
 ---
 
-## Day 3 Roadmap
+## Project Milestones
 
-- [ ] Real-time threat feed and false positive feedback loop
-- [ ] Browser extension companion for instant link inspection
-- [ ] WhatsApp & SMS webhook forwarding integration
-- [ ] Final hackathon demo packaging and video walkthrough
+- [x] **Day 1**: Core text threat intelligence pipeline, deterministic risk engine, BM25 security RAG, and FastAPI REST endpoints.
+- [x] **Day 2**: Multimodal expansion with screenshot OCR (`/analyze/image`), structural URL intelligence & brand lookalike matching (`/analyze/url`), and RFC 822 email forensics (`/analyze/email`).
+- [x] **Day 3 (Final Release)**: Production hardening, quantitative benchmarking (100% F1), one-click startup scripts (`start.ps1`, `start.sh`), Next.js SOC Dashboard with reset controls and instant demo loaders for all 4 modalities.
 
 ---
 

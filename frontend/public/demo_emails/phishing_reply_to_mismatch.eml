@@ -1,0 +1,23 @@
+From: "PayPal Security" <security@paypal-notice-alert.com>
+To: target.victim@example.com
+Reply-To: harvest-receiver@malicious-harvest.xyz
+Subject: URGENT: Your PayPal Account Has Been Limited
+Date: Wed, 08 Oct 2026 10:15:00 +0000
+Message-ID: <alert-88741-paypal@notice-alert.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Received-SPF: fail
+Authentication-Results: spf=fail; dkim=fail; dmarc=fail
+
+Dear Customer,
+
+We detected unauthorized sign-in attempts on your PayPal balance from an unrecognized device in Moscow, Russia.
+As a security precaution, your account privileges have been suspended.
+
+You must verify your credentials and identity immediately within 24 hours:
+https://paypal-security-verification.xyz/restore-access
+
+Failure to verify will lead to permanent account termination and forfeiture of funds.
+
+Sincerely,
+PayPal Fraud Mitigation Team
