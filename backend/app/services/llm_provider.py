@@ -124,8 +124,133 @@ class GeminiProvider(LLMProvider):
             return None
 
 
+class GroqProvider(LLMProvider):
+    """Groq ultra-fast LPU provider implementation using groq SDK."""
+
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
+        self.api_key = api_key or settings.GROQ_API_KEY or settings.effective_api_key
+        self.model = model or settings.GROQ_MODEL or settings.effective_model or "llama-3.3-70b-versatile"
+
+    async def analyze(
+        self,
+        content: str,
+        extracted_entities: ExtractedEntities,
+        heuristic_signals: HeuristicSignals,
+    ) -> Optional[Dict[str, Any]]:
+        if not self.api_key:
+            logger.warning("Groq API key is not configured. Falling back to heuristic mode.")
+            return None
+
+        prompt_input = (
+            f"TEXT TO ANALYZE:\n{content}\n\n"
+            f"DETERMINISTIC ENTITIES DETECTED:\n"
+            f"- URLs: {extracted_entities.urls}\n"
+            f"- Emails: {extracted_entities.emails}\n"
+            f"- Phones: {extracted_entities.phone_numbers}\n\n"
+            f"HEURISTIC SIGNALS:\n"
+            f"- Urgency: {heuristic_signals.urgency}\n"
+            f"- Threat Language: {heuristic_signals.threat_language}\n"
+            f"- Credential Request: {heuristic_signals.credential_request}\n"
+            f"- Financial Request: {heuristic_signals.financial_request}\n"
+        )
+
+        try:
+            from groq import AsyncGroq
+
+            client = AsyncGroq(api_key=self.api_key, timeout=float(settings.LLM_TIMEOUT_SECONDS))
+            logger.info("Calling Groq API with model %s", self.model)
+
+            response = await client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": ANALYSIS_SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt_input},
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.0,
+            )
+
+            raw_text = response.choices[0].message.content or ""
+            raw_text = raw_text.strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text[7:]
+            if raw_text.startswith("```"):
+                raw_text = raw_text[3:]
+            if raw_text.endswith("```"):
+                raw_text = raw_text[:-3]
+
+            parsed = json.loads(raw_text.strip())
+            return parsed
+        except Exception as e:
+            logger.error("Error during Groq analysis call: %s", str(e), exc_info=True)
+            return None
+
+
+class OpenAIProvider(LLMProvider):
+    """OpenAI provider implementation."""
+
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
+        self.api_key = api_key or settings.OPENAI_API_KEY or settings.effective_api_key
+        self.model = model or settings.OPENAI_MODEL or settings.effective_model or "gpt-4o-mini"
+
+    async def analyze(
+        self,
+        content: str,
+        extracted_entities: ExtractedEntities,
+        heuristic_signals: HeuristicSignals,
+    ) -> Optional[Dict[str, Any]]:
+        if not self.api_key:
+            logger.warning("OpenAI API key is not configured. Falling back to heuristic mode.")
+            return None
+
+        prompt_input = (
+            f"TEXT TO ANALYZE:\n{content}\n\n"
+            f"DETERMINISTIC ENTITIES DETECTED:\n"
+            f"- URLs: {extracted_entities.urls}\n"
+            f"- Emails: {extracted_entities.emails}\n"
+            f"- Phones: {extracted_entities.phone_numbers}\n\n"
+            f"HEURISTIC SIGNALS:\n"
+            f"- Urgency: {heuristic_signals.urgency}\n"
+            f"- Threat Language: {heuristic_signals.threat_language}\n"
+            f"- Credential Request: {heuristic_signals.credential_request}\n"
+            f"- Financial Request: {heuristic_signals.financial_request}\n"
+        )
+
+        try:
+            from openai import AsyncOpenAI
+
+            client = AsyncOpenAI(api_key=self.api_key, timeout=float(settings.LLM_TIMEOUT_SECONDS))
+            logger.info("Calling OpenAI API with model %s", self.model)
+
+            response = await client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": ANALYSIS_SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt_input},
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.0,
+            )
+
+            raw_text = response.choices[0].message.content or ""
+            raw_text = raw_text.strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text[7:]
+            if raw_text.startswith("```"):
+                raw_text = raw_text[3:]
+            if raw_text.endswith("```"):
+                raw_text = raw_text[:-3]
+
+            parsed = json.loads(raw_text.strip())
+            return parsed
+        except Exception as e:
+            logger.error("Error during OpenAI analysis call: %s", str(e), exc_info=True)
+            return None
+
+
 class MockLLMProvider(LLMProvider):
     """Deterministic Mock LLM provider for unit tests and offline environments."""
+    model: str = "mock-analyst-v1"
 
     async def analyze(
         self,
@@ -308,11 +433,14 @@ class MockLLMProvider(LLMProvider):
 
 
 def get_llm_provider(provider_name: Optional[str] = None) -> LLMProvider:
-    """Factory to create appropriate LLM provider based on config."""
-    name = (provider_name or settings.LLM_PROVIDER or "gemini").lower()
+    """Factory to create appropriate LLM provider based on config and auto-detection."""
+    name = (provider_name or settings.effective_provider or "mock").lower()
     if name == "mock":
         return MockLLMProvider()
+    if name == "groq":
+        return GroqProvider()
     if name == "gemini":
         return GeminiProvider()
-    # If unknown, default to GeminiProvider
-    return GeminiProvider()
+    if name == "openai":
+        return OpenAIProvider()
+    return GroqProvider() if settings.GROQ_API_KEY else GeminiProvider()
