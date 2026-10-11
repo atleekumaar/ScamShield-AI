@@ -2,7 +2,15 @@
 
 import React, { useState } from "react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const getApiBase = () => {
+  if (typeof window !== "undefined") {
+    // When running on HTTPS (such as Vercel) or remote hosts, use same-origin relative paths to prevent mixed-content blocks
+    if (window.location.protocol === "https:" || (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1")) {
+      return "";
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+};
 
 interface Indicator {
   category: string;
@@ -201,10 +209,12 @@ export default function Home() {
       setLoadingStep((prev) => (prev < loadingSteps.length - 1 ? prev + 1 : prev));
     }, 450);
 
+    const apiBase = getApiBase();
+
     try {
       if (activeTab === "text") {
         if (!textContent.trim()) throw new Error("Please enter a message or communication snippet.");
-        const res = await fetch(`${API_BASE}/api/v1/analyze`, {
+        const res = await fetch(`${apiBase}/api/v1/analyze`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content: textContent, input_type: "text" }),
@@ -216,7 +226,7 @@ export default function Home() {
         if (!selectedFile) throw new Error("Please select an image screenshot (PNG, JPEG, WEBP <= 10MB).");
         const formData = new FormData();
         formData.append("file", selectedFile);
-        const res = await fetch(`${API_BASE}/api/v1/analyze/image`, {
+        const res = await fetch(`${apiBase}/api/v1/analyze/image`, {
           method: "POST",
           body: formData,
         });
@@ -225,7 +235,7 @@ export default function Home() {
         setResult(data);
       } else if (activeTab === "url") {
         if (!urlContent.trim()) throw new Error("Please enter a web address or hyperlink.");
-        const res = await fetch(`${API_BASE}/api/v1/analyze/url`, {
+        const res = await fetch(`${apiBase}/api/v1/analyze/url`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: urlContent.trim() }),
@@ -237,7 +247,7 @@ export default function Home() {
         if (!selectedFile) throw new Error("Please upload an RFC 822 email (.eml) file.");
         const formData = new FormData();
         formData.append("file", selectedFile);
-        const res = await fetch(`${API_BASE}/api/v1/analyze/email`, {
+        const res = await fetch(`${apiBase}/api/v1/analyze/email`, {
           method: "POST",
           body: formData,
         });
