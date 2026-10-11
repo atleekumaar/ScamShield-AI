@@ -1,14 +1,21 @@
 # ScamShield AI
 
-> Multimodal AI Security Analyst for digital fraud, phishing, screenshot OCR, and threat intelligence.
+> Multimodal AI Security Analyst for digital fraud, phishing, screenshot OCR, URL intelligence, and email forensics.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python: 3.12+](https://img.shields.io/badge/Python-3.12%2B-brightgreen.svg)]()
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-teal.svg)](https://fastapi.tiangolo.com)
 [![Next.js: 14](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org)
-[![Pydantic: v2](https://img.shields.io/badge/Pydantic-v2-red.svg)](https://docs.pydantic.dev)
 [![Tests: 73 Passed](https://img.shields.io/badge/Tests-73%20Passed-brightgreen.svg)]()
 [![Evaluation: 100% F1](https://img.shields.io/badge/Evaluation-100%25%20F1-brightgreen.svg)]()
+[![Vercel: Live](https://img.shields.io/badge/Vercel-Live-success.svg)](https://frontend-gold-seven-lmsl8sfjru.vercel.app)
+
+---
+
+## 🌐 Live Production Demo
+
+- **Web Dashboard:** [https://frontend-gold-seven-lmsl8sfjru.vercel.app](https://frontend-gold-seven-lmsl8sfjru.vercel.app)
+- **Architecture:** Cloud-native Next.js 14 SOC Dashboard backed by Groq AI (`qwen/qwen3.8-27b`) serverless intelligence engine + FastAPI high-performance microservices.
 
 ---
 
@@ -16,14 +23,15 @@
 
 **ScamShield AI** is an explainable cybersecurity intelligence assistant designed to protect consumers and organizations from social engineering, phishing, fake delivery notices, fraudulent job postings, malicious URLs, credential harvesting, and email fraud.
 
-### Hackathon Milestones
-- **Day 1**: Core text threat intelligence pipeline, deterministic risk engine, BM25 security RAG, and FastAPI REST endpoints.
-- **Day 2**: Multimodal expansion with screenshot OCR (`/analyze/image`), structural URL intelligence & brand lookalike matching (`/analyze/url`), and RFC 822 email forensics (`/analyze/email`).
-- **Day 3 (Final Release)**: Production hardening, quantitative benchmarking (100% F1 on ground truth dataset), one-click startup scripts (`start.ps1`, `start.sh`), Next.js SOC Dashboard with reset controls and instant demo loaders for all 4 modalities.
+It processes **4 distinct modalities**:
+1. **Text Analysis:** Detects coercive urgency, pretexting, financial lure, and fake account notices.
+2. **Screenshot / OCR:** Analyzes SMS alerts, WhatsApp scams, and phishing screenshots directly from image uploads.
+3. **URL Intelligence:** Evaluates brand lookalikes, suspicious TLDs, IP hosts, punycode, and deceptive paths without making dangerous external requests.
+4. **Email Forensics:** Parses `.eml` headers, flags display-name spoofing, Reply-To mismatches, and inspects attachment risks.
 
 ---
 
-## Multimodal Pipeline Architecture
+## Architecture
 
 ```text
                      SCAMSHIELD AI
@@ -53,42 +61,32 @@
                 SECURITY DASHBOARD
 ```
 
-See [`docs/architecture.md`](docs/architecture.md) for full architectural documentation.
-
 ---
 
-## Directory Structure
+## Clean Project Structure
 
 ```text
 ScamShield-AI/
-├── backend/
+├── backend/                            # FastAPI Intelligence Backend
 │   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py                     # FastAPI app, CORS, error handling
-│   │   ├── config.py                   # Pydantic-settings config
-│   │   │
-│   │   ├── api/
-│   │   │   ├── __init__.py
-│   │   │   ├── analyze.py              # Text, Image, URL, and Email routes
-│   │   │   └── health.py               # GET /health
-│   │   │
-│   │   ├── services/
-│   │   │   ├── __init__.py
-│   │   │   ├── threat_analyzer.py      # Core analysis pipeline orchestrator
-│   │   │   ├── risk_engine.py          # Deterministic risk engine & heuristics
-│   │   │   ├── ocr_service.py          # Image security & OCR engine
-│   │   │   ├── url_intelligence.py     # Structural URL signals & brand lookalikes
-│   │   │   ├── email_forensics.py      # RFC 822 email parser & header anomalies
-│   │   │   ├── input_normalizer.py     # Multimodal normalization
-│   │   │   ├── rag_service.py          # BM25 & Vector knowledge retriever
-│   │   │   └── llm_provider.py         # LLM provider abstraction (Gemini + Mock)
-│   │   │
+│   │   ├── main.py                     # App instance, CORS, routers & lifecycle
+│   │   ├── config.py                   # Pydantic v2 application settings
+│   │   ├── api/                        # REST API endpoints
+│   │   │   ├── analyze.py              # Text, Image, URL & Email analysis routes
+│   │   │   └── health.py               # Liveness & readiness probes
+│   │   ├── services/                   # Core security business logic
+│   │   │   ├── threat_analyzer.py      # Multimodal pipeline orchestrator
+│   │   │   ├── risk_engine.py          # Deterministic risk engine & heuristic scoring
+│   │   │   ├── ocr_service.py          # Secure image validation & OCR extraction
+│   │   │   ├── url_intelligence.py     # Structural signals & brand lookalike analyzer
+│   │   │   ├── email_forensics.py      # RFC 822 parser & email header forensics
+│   │   │   ├── input_normalizer.py     # Unified payload normalization
+│   │   │   ├── rag_service.py          # BM25 security knowledge retriever
+│   │   │   └── llm_provider.py         # AI provider abstraction (Groq, Gemini, Mock)
 │   │   ├── models/
-│   │   │   ├── __init__.py
-│   │   │   └── schemas.py              # Strongly-typed Pydantic v2 domain schemas
-│   │   │
-│   │   └── knowledge/                  # Security knowledge base & brand signatures
-│   │       ├── brand_signatures.json
+│   │   │   └── schemas.py              # Strongly-typed domain & report schemas
+│   │   └── knowledge/                  # MITRE-aligned scam taxonomy & signatures
+│   │       ├── brand_signatures.json   # 15+ verified enterprise brand signatures
 │   │       ├── phishing.md
 │   │       ├── social_engineering.md
 │   │       ├── impersonation.md
@@ -96,8 +94,7 @@ ScamShield-AI/
 │   │       ├── credential_theft.md
 │   │       ├── financial_scams.md
 │   │       └── job_scams.md
-│   │
-│   ├── tests/                          # 68 Automated unit & integration tests
+│   ├── tests/                          # 73 automated tests
 │   │   ├── test_analyzer.py
 │   │   ├── test_api.py
 │   │   ├── test_dataset.py
@@ -107,31 +104,47 @@ ScamShield-AI/
 │   │   ├── test_ocr.py
 │   │   ├── test_risk_engine.py
 │   │   └── test_url_intelligence.py
-│   │
+│   ├── evaluation/
+│   │   └── evaluate_dataset.py         # Automated quantitative benchmark runner
 │   ├── requirements.txt
 │   └── .env.example
 │
-├── frontend/                           # Next.js 14 + Tailwind CSS Security SOC Dashboard
+├── frontend/                           # Next.js 14 SOC Dashboard
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── page.tsx                # Cyber SOC Dashboard UI with live mode tabs
+│   │   │   ├── layout.tsx              # Root styling & fonts
+│   │   │   ├── globals.css             # Tailwind dark-mode security theme
+│   │   │   └── api/v1/analyze/         # Serverless cloud API route handlers
+│   │   │       ├── route.ts            # Text threat analyzer handler
+│   │   │       ├── url/route.ts        # URL intelligence handler
+│   │   │       ├── image/route.ts      # Screenshot OCR handler
+│   │   │       └── email/route.ts      # Email forensics handler
+│   │   └── lib/
+│   │       └── serverAnalyzer.ts       # Cloud-native AI analyzer engine
+│   ├── public/                         # Demo assets & media
+│   └── package.json
 │
-├── data/
-│   ├── demo_screenshots/              # Realistic demo scam screenshots
+├── data/                               # Ground-truth evaluation benchmarks
+│   ├── demo_screenshots/              # Sample scam screenshots for OCR demo
 │   ├── demo_emails/                    # Sample phishing & legitimate .eml files
 │   ├── demo_urls.json                  # URL evaluation test suite
-│   └── sample_messages.json            # 10 malicious & 5 legitimate ground-truth samples
+│   └── sample_messages.json            # 15 benchmark ground-truth samples
 │
 ├── docs/
 │   └── architecture.md                 # System architecture documentation
 │
+├── start.ps1                           # One-click Windows startup script
+├── start.sh                            # One-click Linux / macOS startup script
 ├── README.md
-├── .gitignore
 └── LICENSE
 ```
 
 ---
 
-## Quick Start
+## ⚡ Quick Start
 
-### 1. One-Click Launch (Recommended)
+### 1. One-Click Launch
 
 **Windows (PowerShell):**
 ```powershell
@@ -166,7 +179,7 @@ cp backend/.env.example backend/.env
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-The API will be available at:
+Backend Services:
 - **Base URL:** `http://localhost:8000`
 - **Swagger Documentation:** `http://localhost:8000/docs`
 - **Health Check:** `http://localhost:8000/health`
@@ -178,58 +191,25 @@ npm install
 npm run dev
 ```
 
-The Security Dashboard will be available at `http://localhost:3000`.
+Dashboard will be live at `http://localhost:3000`.
 
 ---
 
-## API Reference
+## API Endpoints
 
-### 1. Health Check
-`GET /health`
-```json
-{
-  "status": "healthy",
-  "service": "scamshield-api",
-  "version": "0.2.0"
-}
-```
-
-### 2. Text Analysis
-`POST /api/v1/analyze`
-```json
-{
-  "content": "URGENT! Your SBI account has been suspended today. Complete KYC verification at https://sbi-secure-login.xyz/verify",
-  "input_type": "text"
-}
-```
-
-### 3. Screenshot Analysis
-`POST /api/v1/analyze/image` (Multipart Form Upload)
-- Accepts: PNG, JPEG, WEBP ($\le 10$ MB)
-- Returns: `extracted_text`, `ocr_metadata`, and `threat_report`.
-
-### 4. URL Intelligence
-`POST /api/v1/analyze/url`
-```json
-{
-  "url": "https://sbi-secure-login.xyz/verify"
-}
-```
-Returns:
-- `signals` (Suspicious TLD, deceptive hyphenation, credential path)
-- `brand_similarity` (`brand: "SBI"`, `potential_impersonation: true`)
-- `risk_score`
-
-### 5. Email Forensics
-`POST /api/v1/analyze/email` (Multipart Form Upload)
-- Accepts: `.eml` file ($\le 10$ MB)
-- Returns: `headers` (From, Reply-To, Reply-To mismatch, SPF, DKIM, DMARC), `attachments`, and `threat_report`.
+| Method | Endpoint | Description | Payload |
+|---|---|---|---|
+| `GET` | `/health` | Health and readiness check | None |
+| `POST` | `/api/v1/analyze` | Text threat analysis | `{"content": "...", "input_type": "text"}` |
+| `POST` | `/api/v1/analyze/image` | Screenshot OCR & threat analysis | Multipart form (`file`: PNG/JPEG/WEBP) |
+| `POST` | `/api/v1/analyze/url` | URL intelligence & brand lookalike | `{"url": "https://..."}` |
+| `POST` | `/api/v1/analyze/email` | RFC 822 email forensics | Multipart form (`file`: .eml) |
 
 ---
 
 ## Signature Feature: Attack Chain Explainability
 
-Instead of plain text explanations, ScamShield synthesizes a visual, stepwise attack progression:
+Instead of opaque classification labels, ScamShield synthesizes an explainable, stepwise attack progression:
 
 ```text
 ATTACK CHAIN:
@@ -239,23 +219,22 @@ ATTACK CHAIN:
              ↓
 [ Credential / KYC Solicitation ]
              ↓
-[ Deceptive Link (sbi-secure-login.xyz) ]
+[ Deceptive Link (sbi-verification.xyz) ]
              ↓
 [ Potential Account Takeover ]
 ```
 
 ---
 
-## Quantitative Evaluation Benchmark
+## 📊 Quantitative Evaluation Benchmark
 
-Run the automated evaluation on the curated benchmark dataset (`data/sample_messages.json`):
+Run the automated evaluation benchmark on the curated test suite:
 
 ```bash
 python backend/evaluation/evaluate_dataset.py
 ```
 
 ### Benchmark Results (15 Ground-Truth Samples):
-- **Total Samples Evaluated**: 15 (10 Malicious Threats, 5 Legitimate Communications)
 - **Accuracy**: **100.0%** (15 / 15 correct classifications)
 - **Precision**: **1.0000** (0 false positives)
 - **Recall**: **1.0000** (0 false negatives)
@@ -264,23 +243,20 @@ python backend/evaluation/evaluate_dataset.py
 
 ---
 
-## Automated Test Suite
+## 🧪 Automated Test Suite
 
-Run all 73 automated unit, integration, and security edge case tests:
+Run the full automated test suite:
 
 ```bash
 python -m pytest backend/tests/ -v
 ```
 
-All 73 tests pass in $\sim 2.5$ seconds, covering OCR validation, URL intelligence, email parsing, risk boundaries, dataset accuracy, edge case resilience, and REST endpoints.
-
----
-
-## Project Milestones
-
-- [x] **Day 1**: Core text threat intelligence pipeline, deterministic risk engine, BM25 security RAG, and FastAPI REST endpoints.
-- [x] **Day 2**: Multimodal expansion with screenshot OCR (`/analyze/image`), structural URL intelligence & brand lookalike matching (`/analyze/url`), and RFC 822 email forensics (`/analyze/email`).
-- [x] **Day 3 (Final Release)**: Production hardening, quantitative benchmarking (100% F1), one-click startup scripts (`start.ps1`, `start.sh`), Next.js SOC Dashboard with reset controls and instant demo loaders for all 4 modalities.
+All **73 tests pass**, verifying:
+- Image security boundaries (file types, size limits, corruption handling)
+- URL signal heuristics and brand lookalike detection
+- Email spoofing and authentication parsing
+- Score determinism and risk classifications
+- REST API contracts and schema validation
 
 ---
 
