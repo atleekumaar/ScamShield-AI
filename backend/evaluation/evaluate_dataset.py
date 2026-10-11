@@ -7,7 +7,13 @@ the labeled evaluation dataset.
 import asyncio
 import json
 from pathlib import Path
+import sys
 from typing import Dict, List, Tuple
+
+# Ensure project root is in sys.path regardless of working directory
+project_root = Path(__file__).resolve().parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 from backend.app.models.schemas import AnalyzeRequest
 from backend.app.services.llm_provider import MockLLMProvider
